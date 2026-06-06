@@ -1,7 +1,7 @@
 # TADA-1B RunPod serverless worker (mirrors audio-generator-allen build pattern).
-# hume-tada requires torch>=2.7.0,<2.8.0 + torchvision/torchaudio — use a matching base
-# so pip does NOT reinstall torch (the cause of the earlier build failure).
-FROM pytorch/pytorch:2.7.1-cuda12.6-cudnn9-runtime
+# hume-tada needs torch>=2.7,<2.8. CUDA 12.8 build so it also runs on Blackwell GPUs
+# (sm_120) that RunPod may assign in the 24GB/MIG pools — cu126 lacks sm_120 kernels.
+FROM pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
 
 ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/app/hf \

@@ -1,20 +1,12 @@
 """RunPod serverless handler for Hume AI's TADA-1B TTS.
 
-Mirrors the proven `audio-generator-allen` (IndexTTS2) contract so it drops straight into
-the existing n8n pipeline + GCS storage.
+Mirrors the audio-generator-allen contract. Model loads LAZILY on first request (not at
+import) so the worker starts healthy and any GPU/load error is RETURNED in the response
+(readable via the API) instead of crash-looping the worker.
 
 Input (job["input"]):
-    text        (str, required)
-    voice_name  (str)   reference voice on the network volume: /runpod-volume/voices/{name}.wav
-    prompt_audio(str)   base64 reference WAV (alternative to voice_name)
-    voice_text  (str)   transcript of the reference voice (TADA is zero-shot and REQUIRES it).
-                        Falls back to /runpod-volume/voices/{name}.txt then REFERENCE_TEXT env.
-    audio_path  (str)   GCS base path, e.g. "audio"      ┐ all three present -> upload to GCS,
-    app         (str)   project, e.g. "daily-grace"      ├ return {"audio_url"}
-    file_title  (str)   filename w/o ext                 ┘ else return {"audio_base64"}
-    max_chars   (int)   per-chunk cap (default 600)
-
-Output: {"audio_url": ...} or {"audio_base64": ...}  (+ "audio_seconds")
+    text, voice_name|prompt_audio, voice_text (TADA needs the ref transcript),
+    audio_path/app/file_title (-> GCS url, else base64), max_chars
 """
 import base64
 import io
@@ -22,6 +14,7 @@ import json
 import os
 import re
 import tempfile
+import traceback
 
 import numpy as np
 import soundfile as sf
@@ -32,38 +25,40 @@ from dotenv import load_dotenv
 from google.cloud import storage
 from google.oauth2 import service_account
 
-from tada.modules.encoder import Encoder
-from tada.modules.tada import TadaForCausalLM
-
 load_dotenv()
 
-# --- Config (matches audio-generator-allen layout) ---
-# Voices resolve from the network volume OR a baked /app/voices dir, so the full per-app
-# voice library works in production whether or not a volume is attached.
 VOICE_DIRS = [d for d in [os.getenv("VOICES_DIR"), "/runpod-volume/voices", "/app/voices"] if d]
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "media.apparentgroup.co")
 MODEL_ID = os.getenv("MODEL_ID", "HumeAI/tada-1b")
 CODEC_ID = os.getenv("CODEC_ID", "HumeAI/tada-codec")
 SAMPLE_RATE = int(os.getenv("SAMPLE_RATE", "24000"))
-REFERENCE_TEXT = os.getenv(
-    "REFERENCE_TEXT",
-    "The examination and testimony of the experts enabled the committee to reach a clear conclusion.",
-)
+REFERENCE_TEXT = os.getenv("REFERENCE_TEXT",
+                           "The examination and testimony of the experts enabled the committee to reach a clear conclusion.")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# --- Model init (weights baked into image; guarded so docker build doesn't fail) ---
-print(f"Initializing TADA-1B on {DEVICE}...", flush=True)
-encoder = None
-model = None
-try:
-    encoder = Encoder.from_pretrained(CODEC_ID, subfolder="encoder").to(DEVICE)
-    model = TadaForCausalLM.from_pretrained(MODEL_ID, torch_dtype=torch.bfloat16).to(DEVICE)
-    model.eval()
-    print("Model loaded successfully!", flush=True)
-except Exception as e:  # noqa: BLE001
-    print(f"WARNING: model load deferred/failed (expected during build): {e}", flush=True)
+# --- lazy model load (first request) so import never touches the GPU ---
+_M = {"loaded": False, "encoder": None, "model": None, "error": None}
 
-# --- GCS client (same pattern as the reference worker) ---
+
+def _ensure_model():
+    if _M["loaded"]:
+        return _M
+    try:
+        from tada.modules.encoder import Encoder
+        from tada.modules.tada import TadaForCausalLM
+        _M["encoder"] = Encoder.from_pretrained(CODEC_ID, subfolder="encoder").to(DEVICE)
+        m = TadaForCausalLM.from_pretrained(MODEL_ID, torch_dtype=torch.bfloat16).to(DEVICE)
+        m.eval()
+        _M["model"] = m
+        print("TADA-1B loaded.", flush=True)
+    except Exception as e:  # noqa: BLE001
+        _M["error"] = f"{type(e).__name__}: {e}\n{traceback.format_exc()[-1200:]}"
+        print("TADA-1B load FAILED:", _M["error"], flush=True)
+    _M["loaded"] = True
+    return _M
+
+
+# --- GCS (optional; base64 fallback) ---
 gcs_bucket = None
 _gcs_json = os.getenv("GCS_SERVICE_ACCOUNT_JSON")
 if _gcs_json:
@@ -71,61 +66,53 @@ if _gcs_json:
         info = json.loads(_gcs_json)
         creds = service_account.Credentials.from_service_account_info(info)
         gcs_bucket = storage.Client(credentials=creds, project=info.get("project_id")).bucket(GCS_BUCKET_NAME)
-        print(f"GCS client initialized for bucket: {GCS_BUCKET_NAME}", flush=True)
     except Exception as e:  # noqa: BLE001
-        print(f"WARNING: Failed to initialize GCS client: {e}", flush=True)
-else:
-    print("WARNING: GCS_SERVICE_ACCOUNT_JSON not set. Audio will be returned as base64.", flush=True)
+        print("GCS init failed:", e, flush=True)
 
 
-def base64_to_temp_file(b64: str, suffix: str = ".wav") -> str:
+def base64_to_temp_file(b64, suffix=".wav"):
     if "," in b64:
         b64 = b64.split(",")[1]
     f = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    f.write(base64.b64decode(b64))
-    f.close()
+    f.write(base64.b64decode(b64)); f.close()
     return f.name
 
 
-def get_voice_file_path(voice_name: str) -> str:
+def get_voice_file_path(voice_name):
     if not voice_name.endswith(".wav"):
         voice_name += ".wav"
     for d in VOICE_DIRS:
-        path = os.path.join(d, voice_name)
-        if os.path.exists(path):
-            return path
-    raise FileNotFoundError(f"Voice file '{voice_name}' not found in any of {VOICE_DIRS}")
+        p = os.path.join(d, voice_name)
+        if os.path.exists(p):
+            return p
+    raise FileNotFoundError(f"Voice '{voice_name}' not found in {VOICE_DIRS}")
 
 
-def resolve_reference(job_input):
-    """Return (ref_wav_path, ref_transcript, is_temp)."""
-    voice_name = job_input.get("voice_name")
-    prompt_audio = job_input.get("prompt_audio")
-    voice_text = job_input.get("voice_text")
-    if voice_name:
-        path = get_voice_file_path(voice_name)
-        if not voice_text:
-            sidecar = os.path.splitext(path)[0] + ".txt"
-            voice_text = open(sidecar).read().strip() if os.path.exists(sidecar) else REFERENCE_TEXT
-        return path, voice_text, False
-    if prompt_audio:
-        return base64_to_temp_file(prompt_audio), (voice_text or REFERENCE_TEXT), True
+def resolve_reference(ji):
+    if ji.get("voice_name"):
+        path = get_voice_file_path(ji["voice_name"])
+        vt = ji.get("voice_text")
+        if not vt:
+            side = os.path.splitext(path)[0] + ".txt"
+            vt = open(side).read().strip() if os.path.exists(side) else REFERENCE_TEXT
+        return path, vt, False
+    if ji.get("prompt_audio"):
+        return base64_to_temp_file(ji["prompt_audio"]), (ji.get("voice_text") or REFERENCE_TEXT), True
     raise ValueError("Missing 'voice_name' or 'prompt_audio'.")
 
 
-def upload_audio_to_gcs(file_path, audio_path, app, file_title):
+def upload_audio_to_gcs(fp, audio_path, app, file_title):
     if not gcs_bucket:
         return None
-    blob_name = f"{audio_path}/{app}/{file_title}.wav"
-    gcs_bucket.blob(blob_name).upload_from_filename(file_path, content_type="audio/wav")
-    return f"https://{GCS_BUCKET_NAME}/{blob_name}"
+    blob = f"{audio_path}/{app}/{file_title}.wav"
+    gcs_bucket.blob(blob).upload_from_filename(fp, content_type="audio/wav")
+    return f"https://{GCS_BUCKET_NAME}/{blob}"
 
 
-def _chunk(text, max_chars):
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+def _chunk(text, mx):
     out, cur = [], ""
-    for s in sentences:
-        if len(cur) + len(s) + 1 > max_chars and cur:
+    for s in re.split(r"(?<=[.!?])\s+", text.strip()):
+        if len(cur) + len(s) + 1 > mx and cur:
             out.append(cur.strip()); cur = s
         else:
             cur = (cur + " " + s).strip()
@@ -134,66 +121,59 @@ def _chunk(text, max_chars):
     return out or [text]
 
 
-def _to_waveform(output):
-    """Decode model.generate() output to 1-D float32 audio. Logs real type on first run
-    so the correct path can be pinned (HumeAI README doesn't document decode)."""
+def _to_waveform(output, encoder):
     if torch.is_tensor(output):
         return output.detach().float().cpu().numpy().reshape(-1)
     if isinstance(output, np.ndarray):
         return output.astype("float32").reshape(-1)
-    for attr in ("audio", "waveform", "wav", "audio_values", "values"):
-        if hasattr(output, attr):
-            v = getattr(output, attr)
+    for a in ("audio", "waveform", "wav", "audio_values", "values"):
+        if hasattr(output, a):
+            v = getattr(output, a)
             return (v.detach().float().cpu().numpy() if torch.is_tensor(v) else np.asarray(v, "float32")).reshape(-1)
-    for attr in ("audio_codes", "codes", "tokens", "sequences"):
-        if hasattr(output, attr) and hasattr(encoder, "decode"):
-            return encoder.decode(getattr(output, attr)).detach().float().cpu().numpy().reshape(-1)
-    raise RuntimeError(
-        f"cannot decode generate() output type={type(output)} "
-        f"attrs={[a for a in dir(output) if not a.startswith('_')][:40]}"
-    )
+    for a in ("audio_codes", "codes", "tokens", "sequences"):
+        if hasattr(output, a) and hasattr(encoder, "decode"):
+            return encoder.decode(getattr(output, a)).detach().float().cpu().numpy().reshape(-1)
+    raise RuntimeError(f"cannot decode generate() output type={type(output)} attrs={[a for a in dir(output) if not a.startswith('_')][:40]}")
 
 
 def handler(job):
-    job_input = job["input"]
-    if model is None or encoder is None:
-        return {"error": "Model not initialized."}
-
-    text = job_input.get("text")
+    ji = job.get("input", {}) or {}
+    text = (ji.get("text") or "").strip()
     if not text:
-        return {"error": "Missing required parameter: 'text'"}
-    max_chars = int(job_input.get("max_chars", 600))
-    audio_path = job_input.get("audio_path")
-    app = job_input.get("app")
-    file_title = job_input.get("file_title")
+        return {"error": "missing 'text'"}
 
-    ref_path, ref_text, is_temp = None, None, False
-    output_path = f"/tmp/out_{job['id']}.wav"
+    st = _ensure_model()
+    if st["error"]:
+        return {"error": "model_load_failed", "detail": st["error"], "device": DEVICE,
+                "cuda": torch.cuda.is_available(),
+                "gpu": (torch.cuda.get_device_name(0) if torch.cuda.is_available() else None)}
+    encoder, model = st["encoder"], st["model"]
+
+    ref_path, is_temp, out_path = None, False, f"/tmp/out_{job['id']}.wav"
     try:
-        ref_path, ref_text, is_temp = resolve_reference(job_input)
+        ref_path, ref_text, is_temp = resolve_reference(ji)
         ref_audio, ref_sr = torchaudio.load(ref_path)
         prompt = encoder(ref_audio.to(DEVICE), text=[ref_text], sample_rate=ref_sr)
-
         pieces = []
         with torch.inference_mode():
-            for ch in _chunk(text, max_chars):
-                pieces.append(_to_waveform(model.generate(prompt=prompt, text=ch)))
+            for ch in _chunk(text, int(ji.get("max_chars", 600))):
+                pieces.append(_to_waveform(model.generate(prompt=prompt, text=ch), encoder))
         wav = np.concatenate(pieces) if len(pieces) > 1 else pieces[0]
-        sf.write(output_path, wav, SAMPLE_RATE, subtype="PCM_16")
-        audio_seconds = round(len(wav) / float(SAMPLE_RATE), 3)
-
-        if gcs_bucket and audio_path and app and file_title:
-            url = upload_audio_to_gcs(output_path, audio_path, app, file_title)
-            return {"audio_url": url, "audio_seconds": audio_seconds} if url else {"error": "GCS upload failed"}
-        with open(output_path, "rb") as f:
-            return {"audio_base64": base64.b64encode(f.read()).decode(), "audio_seconds": audio_seconds}
+        sf.write(out_path, wav, SAMPLE_RATE, subtype="PCM_16")
+        asec = round(len(wav) / float(SAMPLE_RATE), 3)
+        ap, app, ft = ji.get("audio_path"), ji.get("app"), ji.get("file_title")
+        if gcs_bucket and ap and app and ft:
+            url = upload_audio_to_gcs(out_path, ap, app, ft)
+            return {"audio_url": url, "audio_seconds": asec} if url else {"error": "gcs upload failed"}
+        with open(out_path, "rb") as f:
+            return {"audio_base64": base64.b64encode(f.read()).decode(), "audio_seconds": asec}
     except Exception as e:  # noqa: BLE001
-        return {"error": f"Inference failed: {str(e)}"}
+        return {"error": "inference_failed", "detail": f"{type(e).__name__}: {e}\n{traceback.format_exc()[-1000:]}"}
     finally:
         if is_temp and ref_path and os.path.exists(ref_path):
             os.remove(ref_path)
-        if os.path.exists(output_path):
-            os.remove(output_path)
+        if os.path.exists(out_path):
+            os.remove(out_path)
 
 
 runpod.serverless.start({"handler": handler})
