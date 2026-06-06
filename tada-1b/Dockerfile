@@ -1,6 +1,7 @@
 # TADA-1B RunPod serverless worker (mirrors audio-generator-allen build pattern).
-# torch + torchaudio ship with the base image.
-FROM pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime
+# hume-tada requires torch>=2.7.0,<2.8.0 + torchvision/torchaudio — use a matching base
+# so pip does NOT reinstall torch (the cause of the earlier build failure).
+FROM pytorch/pytorch:2.7.1-cuda12.6-cudnn9-runtime
 
 ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/app/hf \
@@ -20,9 +21,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Bake model weights so cold starts don't pull from HF.
+# Bake model weights so cold starts don't pull from HF. Non-fatal: if the repo is gated
+# (Llama-3.2 license) or HF is flaky, build still succeeds and weights pull at runtime
+# (set an HF_TOKEN endpoint env if they turn out to be gated).
 RUN python -c "from huggingface_hub import snapshot_download; \
-    snapshot_download('HumeAI/tada-codec'); snapshot_download('HumeAI/tada-1b')"
+    snapshot_download('HumeAI/tada-codec'); snapshot_download('HumeAI/tada-1b')" || \
+    echo "WARN: weight pre-download failed (gated/offline) — will download on first run"
 
 COPY handler.py .
 

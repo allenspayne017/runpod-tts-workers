@@ -1,5 +1,7 @@
 # Chatterbox Turbo RunPod serverless worker (mirrors audio-generator-allen build pattern).
-FROM pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime
+# chatterbox-tts pins torch==2.6.0 + torchaudio==2.6.0 — use a matching base so pip does
+# NOT reinstall torch.
+FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-runtime
 
 ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/app/hf \

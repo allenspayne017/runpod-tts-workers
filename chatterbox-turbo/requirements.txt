@@ -1,7 +1,7 @@
 # Chatterbox Turbo RunPod serverless worker deps.
-# torch + torchaudio come from the Docker base image.
+# torch==2.6.0 + torchaudio==2.6.0 come from the Docker base image. chatterbox-tts pulls
+# transformers==5.2.0 and constrains numpy itself — don't re-pin numpy here.
 runpod
-numpy<2
 chatterbox-tts
 soundfile>=0.12
 google-cloud-storage>=2.18.0
