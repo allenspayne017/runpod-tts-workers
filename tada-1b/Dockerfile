@@ -21,14 +21,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Bake model weights so cold starts don't pull from HF. Non-fatal: if the repo is gated
-# (Llama-3.2 license) or HF is flaky, build still succeeds and weights pull at runtime
-# (set an HF_TOKEN endpoint env if they turn out to be gated).
-RUN python -c "from huggingface_hub import snapshot_download; \
-    snapshot_download('HumeAI/tada-codec'); snapshot_download('HumeAI/tada-1b')" || \
-    echo "WARN: weight pre-download failed (gated/offline) — will download on first run"
-
 COPY handler.py .
+
+# Model weights (HumeAI/tada-codec + HumeAI/tada-1b) download on the FIRST cold start via
+# from_pretrained — keeps the image small and CI-buildable. If the repo is gated, set an
+# HF_TOKEN endpoint env. Subsequent (warm) requests reuse the loaded model.
 
 # Reference voices + GCS creds come from the Network Volume / env at runtime
 # (mount /runpod-volume with the shared voices, set GCS_SERVICE_ACCOUNT_JSON).

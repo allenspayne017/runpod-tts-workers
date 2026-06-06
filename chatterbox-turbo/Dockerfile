@@ -18,11 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Bake Chatterbox Turbo weights so cold starts don't pull from HF.
-# VERIFY the Turbo checkpoint id matches handler.py's loader.
-RUN python -c "from chatterbox.tts import ChatterboxTTS; ChatterboxTTS.from_pretrained(device='cpu')" || \
-    echo "WARN: pre-download skipped — weights pull on first cold start"
-
 COPY handler.py .
+
+# Chatterbox Turbo weights download on the FIRST cold start via from_pretrained — keeps the
+# image small and CI-buildable. Warm requests reuse the loaded model.
 
 CMD ["python", "-u", "handler.py"]
