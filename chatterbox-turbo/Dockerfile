@@ -18,12 +18,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# Install chatterbox (pulls torch 2.6), THEN force torch/torchaudio 2.7.1+cu128 so it runs
-# on Blackwell GPUs. transformers 5.2.0 from chatterbox stays.
+# Keep the base image's torch 2.7.1+cu128 (Blackwell-capable). Install chatterbox-tts with
+# --no-deps so its hard torch==2.6.0 pin can't downgrade torch, then install its real deps
+# (none of which pin torch to 2.6), then the worker extras.
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir --force-reinstall --no-deps \
-        torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
+    pip install --no-cache-dir --no-deps chatterbox-tts && \
+    pip install --no-cache-dir "numpy<2" librosa==0.11.0 s3tokenizer transformers==5.2.0 \
+        diffusers==0.29.0 "resemble-perth>=1.0.0" conformer==0.3.2 safetensors==0.5.3 \
+        spacy-pkuseg pykakasi==2.3.0 pyloudnorm omegaconf && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY handler.py .
 
