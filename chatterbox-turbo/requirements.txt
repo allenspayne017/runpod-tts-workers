@@ -1,6 +1,8 @@
 # Chatterbox Turbo RunPod serverless worker deps.
-# torch/torchaudio come from the CUDA base image. chatterbox-tts pulls its own deps.
+# torch + torchaudio come from the Docker base image.
+runpod
+numpy<2
 chatterbox-tts
-runpod>=1.6.0
 soundfile>=0.12
-numpy
+google-cloud-storage>=2.18.0
+python-dotenv>=1.0.0

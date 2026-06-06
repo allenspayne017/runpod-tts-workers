@@ -5,16 +5,30 @@ against the existing IndexTTS2 service, on the **same GPU (RTX 3090)** so the co
 comparison is apples-to-apples (GPU-time billing, not per-audio-second).
 
 ## Why these exist
-The existing IndexTTS2 endpoint (`indextts-api-service`, id `7axelvd332ctge`) runs the
-public image `mob124/indextts-xtts:latest` as a serverless template (`63kiqawgvm`) on an
-RTX 3090. We replicate that exact pattern for two new models so we can measure real
-`executionTime` (GPU-seconds) per request and compute true cost.
+These workers replicate the proven **`audio-generator-allen`** worker
+(`Apparent-Group-Limited/audio-generator-allen`, the IndexTTS2 image) so they drop into the
+same n8n pipeline. We can then measure real `executionTime` (GPU-seconds) per request on the
+same RTX 3090 and compute true cost.
 
 | Model | Image source | Build needed? |
 |---|---|---|
-| IndexTTS2 (baseline) | `mob124/indextts-xtts:latest` (public) | already deployed |
+| IndexTTS2 (baseline) | `audio-generator-allen` repo | already deployed |
 | Chatterbox Turbo | `chatterbox-turbo/` (this repo) | yes — build + push |
 | TADA-1B | `tada-1b/` (this repo) | yes — build + push |
+
+## Shared contract (matches audio-generator-allen)
+Both `handler.py` files use the **same input/output contract** as the reference worker:
+- **Input**: `{ text, voice_name | prompt_audio, audio_path, app, file_title, ... }`
+- **Voices**: pre-uploaded WAVs on the shared network volume `ae8uking8o` at
+  `/runpod-volume/voices/{name}.wav` (available: `mark, nayan, Lisa, nico, evelyn, jenny`).
+- **Output**: uploads to GCS `media.apparentgroup.co/{audio_path}/{app}/{file_title}.wav` and
+  returns `{"audio_url"}` when `GCS_SERVICE_ACCOUNT_JSON` + path params are set; otherwise
+  `{"audio_base64"}`.
+- Model weights are **baked into the image** (small models), so only the voices volume is shared.
+
+> ⚠️ **TADA-1B needs the reference voice's transcript** (`voice_text`, zero-shot requirement).
+> Add `{voice}.txt` sidecars next to the WAVs on the volume, or pass `voice_text` per request.
+> Timing/cost is unaffected by transcript accuracy; only voice-clone quality is.
 
 > Chatterbox Turbo also exists as a RunPod **public** endpoint
 > (`api.runpod.ai/v2/chatterbox-turbo`) but it bills **$0.001 per second of audio**

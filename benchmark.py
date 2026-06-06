@@ -35,12 +35,21 @@ TEXT = (
     "and exactly where you need to be."
 )
 
+# Same voice ("jenny") across all three for a fair comparison — it lives on the shared
+# /runpod-volume/voices network volume. TADA also needs the voice transcript (voice_text);
+# set VOICE_TEXT to jenny.wav's actual transcript for best quality (timing is unaffected).
+VOICE = "jenny"
+VOICE_TEXT = os.environ.get("VOICE_TEXT", "")  # transcript of jenny.wav (TADA only)
+
 # Fill in endpoint ids after deploying. `inp` builds the RunPod input for that model.
 CONFIG = {
-    "IndexTTS2":  dict(endpoint="7axelvd332ctge", inp=lambda t: {"input": {"text": t}}),       # VERIFY input schema
-    "ChatterboxTurbo": dict(endpoint="REPLACE_ME", inp=lambda t: {"input": {"text": t}}),
-    "TADA-1B":    dict(endpoint="REPLACE_ME", inp=lambda t: {"input": {"text": t}}),
-    # Reference only: the RunPod-hosted public Chatterbox (billed per audio-sec, not GPU-time):
+    "IndexTTS2":  dict(endpoint="7axelvd332ctge",
+                       inp=lambda t: {"input": {"text": t, "voice_name": VOICE}}),
+    "ChatterboxTurbo": dict(endpoint="REPLACE_ME",
+                            inp=lambda t: {"input": {"text": t, "voice_name": VOICE}}),
+    "TADA-1B":    dict(endpoint="REPLACE_ME",
+                       inp=lambda t: {"input": {"text": t, "voice_name": VOICE, "voice_text": VOICE_TEXT}}),
+    # Reference only: RunPod-hosted PUBLIC Chatterbox (billed per audio-sec, not GPU-time):
     "ChatterboxTurbo(public)": dict(endpoint="chatterbox-turbo",
                                     inp=lambda t: {"input": {"prompt": t, "voice": "lucy", "format": "wav"}}),
 }
