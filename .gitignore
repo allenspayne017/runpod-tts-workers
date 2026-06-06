@@ -15,3 +15,6 @@ venv/
 .env
 *.key
 *-firebase-adminsdk-*.json
+
+# local watch log
+gha_watch.log
