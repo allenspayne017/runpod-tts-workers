@@ -121,37 +121,21 @@ def _chunk(text, mx):
     return out or [text]
 
 
-def _conv(x):
-    """Any tensor/array -> 1-D float32 numpy, ALWAYS moving off the GPU first."""
-    if torch.is_tensor(x):
-        return x.detach().to("cpu", torch.float32).numpy().reshape(-1)
-    if isinstance(x, np.ndarray):
-        return x.astype("float32").reshape(-1)
-    return None
-
-
 def _to_waveform(output, encoder):
-    w = _conv(output)
-    if w is not None:
-        return w
-    if isinstance(output, (list, tuple)):
-        for el in output:
-            w = _conv(el)
-            if w is not None:
-                return w
-    for a in ("audio", "waveform", "wav", "audio_values", "values"):
-        if hasattr(output, a):
-            v = getattr(output, a)
-            v = v() if callable(v) else v
-            w = _conv(v)
-            if w is not None:
-                return w
-    for a in ("audio_codes", "codes", "tokens", "sequences"):
-        if hasattr(output, a) and hasattr(encoder, "decode"):
-            w = _conv(encoder.decode(getattr(output, a)))
-            if w is not None:
-                return w
-    raise RuntimeError(f"cannot decode generate() output type={type(output)} attrs={[a for a in dir(output) if not a.startswith('_')][:40]}")
+    """Per the TADA inference notebook: the waveform is output.audio[0] at 24kHz."""
+    aud = getattr(output, "audio", None)
+    if aud is None and hasattr(output, "get"):
+        try:
+            aud = output.get("audio")
+        except Exception:
+            aud = None
+    if torch.is_tensor(aud):
+        if aud.dim() > 1:
+            aud = aud[0]
+        return aud.detach().to("cpu", torch.float32).numpy().reshape(-1)
+    if isinstance(aud, np.ndarray):
+        return aud.astype("float32").reshape(-1)
+    raise RuntimeError(f"output.audio not a tensor: type={type(aud)} repr={repr(aud)[:160]}")
 
 
 def handler(job):
@@ -171,7 +155,13 @@ def handler(job):
     try:
         ref_path, ref_text, is_temp = resolve_reference(ji)
         ref_audio, ref_sr = torchaudio.load(ref_path)
-        prompt = encoder(ref_audio.to(DEVICE), text=[ref_text], sample_rate=ref_sr)
+        ref_audio = ref_audio.mean(dim=0, keepdim=True)                    # mono (notebook)
+        ref_audio = ref_audio / ref_audio.abs().max().clamp(min=1e-8)      # normalize (notebook)
+        ref_audio = ref_audio.to(DEVICE)
+        try:
+            prompt = encoder(ref_audio, sample_rate=ref_sr)                # current TADA API (no transcript)
+        except TypeError:
+            prompt = encoder(ref_audio, text=[ref_text], sample_rate=ref_sr)  # older API fallback
         pieces = []
         with torch.inference_mode():
             for ch in _chunk(text, int(ji.get("max_chars", 600))):
