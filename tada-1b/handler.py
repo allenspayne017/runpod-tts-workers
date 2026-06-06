@@ -121,21 +121,33 @@ def _chunk(text, mx):
     return out or [text]
 
 
+def _one(x):
+    if torch.is_tensor(x):
+        if x.dim() > 1:
+            x = x.reshape(-1)
+        return x.detach().to("cpu", torch.float32).numpy().reshape(-1)
+    if isinstance(x, np.ndarray):
+        return x.astype("float32").reshape(-1)
+    return None
+
+
 def _to_waveform(output, encoder):
-    """Per the TADA inference notebook: the waveform is output.audio[0] at 24kHz."""
+    """TADA: output.audio is a list of per-item waveform tensors (24kHz). Notebook uses
+    output.audio[0]; we concat if there are several."""
     aud = getattr(output, "audio", None)
     if aud is None and hasattr(output, "get"):
         try:
             aud = output.get("audio")
         except Exception:
             aud = None
-    if torch.is_tensor(aud):
-        if aud.dim() > 1:
-            aud = aud[0]
-        return aud.detach().to("cpu", torch.float32).numpy().reshape(-1)
-    if isinstance(aud, np.ndarray):
-        return aud.astype("float32").reshape(-1)
-    raise RuntimeError(f"output.audio not a tensor: type={type(aud)} repr={repr(aud)[:160]}")
+    if isinstance(aud, (list, tuple)):
+        parts = [p for p in (_one(a) for a in aud) if p is not None]
+        if parts:
+            return np.concatenate(parts) if len(parts) > 1 else parts[0]
+    w = _one(aud)
+    if w is not None:
+        return w
+    raise RuntimeError(f"output.audio not decodable: type={type(aud)} repr={repr(aud)[:160]}")
 
 
 def handler(job):
