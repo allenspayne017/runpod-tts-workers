@@ -121,18 +121,36 @@ def _chunk(text, mx):
     return out or [text]
 
 
+def _conv(x):
+    """Any tensor/array -> 1-D float32 numpy, ALWAYS moving off the GPU first."""
+    if torch.is_tensor(x):
+        return x.detach().to("cpu", torch.float32).numpy().reshape(-1)
+    if isinstance(x, np.ndarray):
+        return x.astype("float32").reshape(-1)
+    return None
+
+
 def _to_waveform(output, encoder):
-    if torch.is_tensor(output):
-        return output.detach().float().cpu().numpy().reshape(-1)
-    if isinstance(output, np.ndarray):
-        return output.astype("float32").reshape(-1)
+    w = _conv(output)
+    if w is not None:
+        return w
+    if isinstance(output, (list, tuple)):
+        for el in output:
+            w = _conv(el)
+            if w is not None:
+                return w
     for a in ("audio", "waveform", "wav", "audio_values", "values"):
         if hasattr(output, a):
             v = getattr(output, a)
-            return (v.detach().float().cpu().numpy() if torch.is_tensor(v) else np.asarray(v, "float32")).reshape(-1)
+            v = v() if callable(v) else v
+            w = _conv(v)
+            if w is not None:
+                return w
     for a in ("audio_codes", "codes", "tokens", "sequences"):
         if hasattr(output, a) and hasattr(encoder, "decode"):
-            return encoder.decode(getattr(output, a)).detach().float().cpu().numpy().reshape(-1)
+            w = _conv(encoder.decode(getattr(output, a)))
+            if w is not None:
+                return w
     raise RuntimeError(f"cannot decode generate() output type={type(output)} attrs={[a for a in dir(output) if not a.startswith('_')][:40]}")
 
 
