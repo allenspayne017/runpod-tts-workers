@@ -30,6 +30,23 @@ Both `handler.py` files use the **same input/output contract** as the reference 
 > Add `{voice}.txt` sidecars next to the WAVs on the volume, or pass `voice_text` per request.
 > Timing/cost is unaffected by transcript accuracy; only voice-clone quality is.
 
+## Production: full multi-voice support (REQUIRED for real use)
+The benchmark uses a single reference voice for convenience, but production needs every
+app's voice roster (Daily Grace → Jake/Dennis/Marcus, Becoming → Marcus/Sarah/…, plus the
+shared `mark/nayan/Lisa/nico/evelyn/jenny`). `handler.py` resolves `voice_name` from any of
+`$VOICES_DIR`, `/runpod-volume/voices`, then `/app/voices`, so use **either**:
+
+- **(Recommended) Attach the shared network volume `ae8uking8o`** — it already holds every
+  voice WAV, single source of truth for all apps, no rebuild to add a voice. Attach it via
+  `deploy_endpoint.py` (does this automatically) or Endpoint → Edit → Network Volume. This is
+  why the GitHub-quick-deploy (no volume) is benchmark-only.
+- **(Or) Bake voices into the image** — drop the WAVs (and `{voice}.txt` transcripts for
+  TADA) into `tada-1b/voices/` and `chatterbox-turbo/voices/`, add `COPY voices/ /app/voices/`
+  to the Dockerfile, rebuild. Self-contained but needs a rebuild per voice change.
+
+For TADA specifically, each voice also needs its transcript (`{voice}.txt` sidecar) for
+zero-shot cloning.
+
 > Chatterbox Turbo also exists as a RunPod **public** endpoint
 > (`api.runpod.ai/v2/chatterbox-turbo`) but it bills **$0.001 per second of audio**
 > (~$3.60/audio-hour) — pricier than Inworld and NOT the cheap path. Self-hosting on a

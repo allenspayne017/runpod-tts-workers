@@ -38,7 +38,9 @@ from tada.modules.tada import TadaForCausalLM
 load_dotenv()
 
 # --- Config (matches audio-generator-allen layout) ---
-VOICES_DIR = os.getenv("VOICES_DIR", "/runpod-volume/voices")
+# Voices resolve from the network volume OR a baked /app/voices dir, so the full per-app
+# voice library works in production whether or not a volume is attached.
+VOICE_DIRS = [d for d in [os.getenv("VOICES_DIR"), "/runpod-volume/voices", "/app/voices"] if d]
 GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "media.apparentgroup.co")
 MODEL_ID = os.getenv("MODEL_ID", "HumeAI/tada-1b")
 CODEC_ID = os.getenv("CODEC_ID", "HumeAI/tada-codec")
@@ -88,10 +90,11 @@ def base64_to_temp_file(b64: str, suffix: str = ".wav") -> str:
 def get_voice_file_path(voice_name: str) -> str:
     if not voice_name.endswith(".wav"):
         voice_name += ".wav"
-    path = os.path.join(VOICES_DIR, voice_name)
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Voice file '{voice_name}' not found in {VOICES_DIR}")
-    return path
+    for d in VOICE_DIRS:
+        path = os.path.join(d, voice_name)
+        if os.path.exists(path):
+            return path
+    raise FileNotFoundError(f"Voice file '{voice_name}' not found in any of {VOICE_DIRS}")
 
 
 def resolve_reference(job_input):
