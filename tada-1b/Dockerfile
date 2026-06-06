@@ -19,7 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Staged install avoids pip 'resolution-too-deep': resolve hume-tada (heavy transformers
+# graph) on its own first, then the lightweight extras separately.
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir hume-tada && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY handler.py .
 

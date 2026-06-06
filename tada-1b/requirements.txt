@@ -1,9 +1,7 @@
-# TADA-1B RunPod serverless worker deps.
-# torch/torchvision/torchaudio come from the Docker base image (torch 2.7.x). hume-tada
-# pulls transformers>=4.57 + descript-audio-codec. Let numpy resolve to avoid conflicts.
+# TADA-1B worker EXTRAS only. hume-tada is installed SEPARATELY (first) in the Dockerfile
+# to avoid pip 'resolution-too-deep' — its transformers graph + google-cloud-storage together
+# overwhelm pip's resolver. torch/torchvision/torchaudio come from the base image.
 runpod
-hume-tada
 soundfile>=0.12
 google-cloud-storage>=2.18.0
 python-dotenv>=1.0.0
-huggingface_hub>=0.24
