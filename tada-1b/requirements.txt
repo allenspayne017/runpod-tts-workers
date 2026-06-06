@@ -1,0 +1,8 @@
+# TADA-1B RunPod serverless worker deps.
+# torch/torchaudio come from the CUDA base image in the Dockerfile (do not re-pin here
+# to avoid CUDA wheel conflicts). hume-tada pulls transformers/accelerate as needed.
+hume-tada
+runpod>=1.6.0
+huggingface_hub>=0.24
+soundfile>=0.12
+numpy

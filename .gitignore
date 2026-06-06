@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Test/benchmark artifacts
+*.wav
+*.mp3
+*.flac
+*.ogg
+
+# Secrets / local env (never commit RunPod or cloud keys)
+.env
+*.key
+*-firebase-adminsdk-*.json
