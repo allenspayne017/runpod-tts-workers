@@ -45,7 +45,8 @@ def _ensure_model():
         return _M
     try:
         from tada.modules.encoder import Encoder
-        from tada.modules.tada import TadaForCausalLM
+        from tada.modules.tada import TadaForCausalLM, InferenceOptions
+        _M["InferenceOptions"] = InferenceOptions
         _M["encoder"] = Encoder.from_pretrained(CODEC_ID, subfolder="encoder").to(DEVICE)
         m = TadaForCausalLM.from_pretrained(MODEL_ID, torch_dtype=torch.bfloat16).to(DEVICE)
         m.eval()
@@ -174,10 +175,17 @@ def handler(job):
             prompt = encoder(ref_audio, sample_rate=ref_sr)                # current TADA API (no transcript)
         except TypeError:
             prompt = encoder(ref_audio, text=[ref_text], sample_rate=ref_sr)  # older API fallback
+        # tone/quality controls: pass inference_options (speed_up_factor, acoustic_cfg_scale,
+        # num_acoustic_candidates+scorer, etc.) + num_transition_steps from the request.
+        IO = st.get("InferenceOptions")
+        io_kwargs = ji.get("inference_options") or {}
+        gen_kwargs = {"num_transition_steps": int(ji.get("num_transition_steps", 5))}
+        if io_kwargs and IO is not None:
+            gen_kwargs["inference_options"] = IO(**io_kwargs)
         pieces = []
         with torch.inference_mode():
             for ch in _chunk(text, int(ji.get("max_chars", 600))):
-                pieces.append(_to_waveform(model.generate(prompt=prompt, text=ch), encoder))
+                pieces.append(_to_waveform(model.generate(prompt=prompt, text=ch, **gen_kwargs), encoder))
         wav = np.concatenate(pieces) if len(pieces) > 1 else pieces[0]
         sf.write(out_path, wav, SAMPLE_RATE, subtype="PCM_16")
         asec = round(len(wav) / float(SAMPLE_RATE), 3)

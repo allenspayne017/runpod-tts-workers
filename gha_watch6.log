@@ -1,0 +1,284 @@
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push less than a minute ago
+
+JOBS
+* build (tada-1b) (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  * Free disk space
+  * Run docker/setup-buildx-action@v3
+  * Log in to GHCR
+  * Lowercase owner
+  * Build and push tada-1b
+  * Post Run actions/checkout@v4
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  * Free disk space
+  * Run docker/setup-buildx-action@v3
+  * Log in to GHCR
+  * Lowercase owner
+  * Build and push chatterbox-turbo
+  * Post Run actions/checkout@v4
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push less than a minute ago
+
+JOBS
+* build (tada-1b) (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push tada-1b
+  * Post Build and push tada-1b
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push chatterbox-turbo
+  * Post Build and push chatterbox-turbo
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push about 1 minute ago
+
+JOBS
+* build (tada-1b) (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push tada-1b
+  * Post Build and push tada-1b
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push chatterbox-turbo
+  * Post Build and push chatterbox-turbo
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push about 1 minute ago
+
+JOBS
+* build (tada-1b) (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push tada-1b
+  * Post Build and push tada-1b
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push chatterbox-turbo
+  * Post Build and push chatterbox-turbo
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push about 2 minutes ago
+
+JOBS
+* build (tada-1b) (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push tada-1b
+  * Post Build and push tada-1b
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push chatterbox-turbo
+  * Post Build and push chatterbox-turbo
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push about 2 minutes ago
+
+JOBS
+* build (tada-1b) (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  ✓ Build and push tada-1b
+  ✓ Post Build and push tada-1b
+  ✓ Post Log in to GHCR
+  ✓ Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push chatterbox-turbo
+  * Post Build and push chatterbox-turbo
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push about 3 minutes ago
+
+JOBS
+✓ build (tada-1b) in 2m56s (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  ✓ Build and push tada-1b
+  ✓ Post Build and push tada-1b
+  ✓ Post Log in to GHCR
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  * Build and push chatterbox-turbo
+  * Post Build and push chatterbox-turbo
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+
+ANNOTATIONS
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build (tada-1b): .github#2
+
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main build-runpod-images · 27060928876
+Triggered via push about 4 minutes ago
+
+JOBS
+✓ build (tada-1b) in 2m56s (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  ✓ Build and push tada-1b
+  ✓ Post Build and push tada-1b
+  ✓ Post Log in to GHCR
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+* build (chatterbox-turbo) (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  ✓ Build and push chatterbox-turbo
+  * Post Build and push chatterbox-turbo
+  * Post Log in to GHCR
+  * Post Run docker/setup-buildx-action@v3
+  * Post Run actions/checkout@v4
+
+ANNOTATIONS
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build (tada-1b): .github#2
+
+✓ main build-runpod-images · 27060928876
+Triggered via push about 4 minutes ago
+
+JOBS
+✓ build (tada-1b) in 2m56s (ID 79873552112)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  ✓ Build and push tada-1b
+  ✓ Post Build and push tada-1b
+  ✓ Post Log in to GHCR
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+✓ build (chatterbox-turbo) in 4m5s (ID 79873552114)
+  ✓ Set up job
+  ✓ Run actions/checkout@v4
+  ✓ Free disk space
+  ✓ Run docker/setup-buildx-action@v3
+  ✓ Log in to GHCR
+  ✓ Lowercase owner
+  ✓ Build and push chatterbox-turbo
+  ✓ Post Build and push chatterbox-turbo
+  ✓ Post Log in to GHCR
+  ✓ Post Run docker/setup-buildx-action@v3
+  ✓ Post Run actions/checkout@v4
+  ✓ Complete job
+
+ANNOTATIONS
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build (tada-1b): .github#2
+
+! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, docker/build-push-action@v6, docker/login-action@v3, docker/setup-buildx-action@v3. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+build (chatterbox-turbo): .github#2
+
