@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED=1 \
     SAMPLE_RATE=24000 \
     MODEL_ID=HumeAI/tada-1b \
     CODEC_ID=HumeAI/tada-codec \
-    VOICES_DIR=/runpod-volume/voices \
+    VOICES_DIR=/app/voices \
     GCS_BUCKET_NAME=media.apparentgroup.co \
     PYTHONPATH=/app
 
@@ -27,10 +27,13 @@ RUN pip install --upgrade pip && \
 
 COPY handler.py .
 
+# Bake the app reference voices INTO the image so voice_name (jenny/mark/nayan/Lisa/
+# nico/evelyn) works on any GPU in any datacenter — no Network Volume dependency.
+# 25s mono clips pulled from the shared indextts volume. A mounted /runpod-volume/voices
+# still overrides (handler checks $VOICES_DIR -> /runpod-volume/voices -> /app/voices).
+COPY voices/ /app/voices/
+
 # Model weights (HumeAI/tada-codec + HumeAI/tada-1b) download on the FIRST cold start via
 # from_pretrained — keeps the image small and CI-buildable. If the repo is gated, set an
 # HF_TOKEN endpoint env. Subsequent (warm) requests reuse the loaded model.
-
-# Reference voices + GCS creds come from the Network Volume / env at runtime
-# (mount /runpod-volume with the shared voices, set GCS_SERVICE_ACCOUNT_JSON).
 CMD ["python", "-u", "handler.py"]
