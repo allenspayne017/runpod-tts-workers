@@ -11,9 +11,11 @@ venv/
 *.flac
 *.ogg
 
-# ...but DO commit the baked TADA reference voices (so voice_name works without a volume)
+# ...but DO commit the baked reference voices (so voice_name works without a volume)
 !tada-1b/voices/
 !tada-1b/voices/*.wav
+!chatterbox-turbo/voices/
+!chatterbox-turbo/voices/*.wav
 
 # Secrets / local env (never commit RunPod or cloud keys)
 .env

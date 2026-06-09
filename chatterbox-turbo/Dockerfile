@@ -7,7 +7,7 @@ FROM pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
 
 ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/app/hf \
-    VOICES_DIR=/runpod-volume/voices \
+    VOICES_DIR=/app/voices \
     GCS_BUCKET_NAME=media.apparentgroup.co \
     PYTHONPATH=/app
 
@@ -30,7 +30,11 @@ RUN pip install --upgrade pip && \
 
 COPY handler.py .
 
+# Bake the app reference voices INTO the image so voice_name (jenny/mark/nayan/Lisa/nico/
+# evelyn) works on any GPU in any datacenter — no Network Volume dependency. A mounted
+# /runpod-volume/voices still overrides (handler checks $VOICES_DIR -> volume -> /app/voices).
+COPY voices/ /app/voices/
+
 # Chatterbox Turbo weights download on the FIRST cold start via from_pretrained — keeps the
 # image small and CI-buildable. Warm requests reuse the loaded model.
-
 CMD ["python", "-u", "handler.py"]
